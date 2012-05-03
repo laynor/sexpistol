@@ -13,6 +13,8 @@ class SexpistolParser < StringScanner
     exp = []
     while true
       case fetch_token
+        when ';'
+          skipUntilNextLine
         when '('
           exp << parse
         when ')'
@@ -31,6 +33,10 @@ class SexpistolParser < StringScanner
     exp
   end
   
+  def skipUntilNextLine
+    skip_until(/$/)
+  end
+
   def fetch_token
     skip(/\s+/)
     return nil if(eos?)
@@ -51,6 +57,9 @@ class SexpistolParser < StringScanner
     # Match a comma (for comma quoting)
     elsif scan(/'/)
       matched.to_sym
+    # Match a comment
+    elsif scan(/;/)
+      matched
     # Match a symbol
     elsif scan(/[^\(\)\s]+/)
       matched.to_sym
