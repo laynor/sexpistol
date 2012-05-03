@@ -3,10 +3,16 @@ require 'strscan'
 class SexpistolParser < StringScanner
 
   def initialize(string)
-    unless(string.count('(') == string.count(')'))
+    unless(parenthesesAreBalanced(string))
       raise Exception, "Missing closing parentheses"
     end
     super(string)
+  end
+
+  def parenthesesAreBalanced(string)
+    string.count('(') == string.count(')') &&
+      string.count('[') == string.count(']') &&
+      string.count('{') == string.count('}')
   end
 
   def parse
@@ -15,13 +21,13 @@ class SexpistolParser < StringScanner
       case fetch_token
         when ';'
           skipUntilNextLine
-        when '('
+        when '(', '{', '['
           exp << parse
-        when ')'
+        when ')', '}', ']'
           break
         when :"'"
           case fetch_token
-          when '(' then exp << [:quote].concat([parse])
+          when '(', '{', '[' then exp << [:quote].concat([parse])
           else exp << [:quote, @token]
           end
         when String, Fixnum, Float, Symbol 
@@ -43,7 +49,7 @@ class SexpistolParser < StringScanner
     
     @token = 
     # Match parentheses
-    if scan(/[\(\)]/)      
+    if scan(/[\(\)\{\}\[\]]/)
       matched
     # Match a string literal
     elsif scan(/"([^"\\]|\\.)*"/)
